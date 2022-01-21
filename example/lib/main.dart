@@ -1,50 +1,20 @@
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/services.dart';
-import 'package:sii_printer_plugin/sii_printer_plugin.dart';
+import 'package:sii_printer_plugin/sii_printer_core.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   @override
-  State<MyApp> createState() => _MyAppState();
+  _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-
-  @override
-  void initState() {
-    super.initState();
-    initPlatformState();
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await SiiPrinterPlugin.platformVersion ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
-  }
+  List<dynamic>? printers;
+  String? selectedAddress;
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +23,111 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+        body: Builder(
+          builder: (context) => Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: DropdownSearch<dynamic>(
+                          mode: Mode.DIALOG,
+                          showSearchBox: true,
+                          showSelectedItems: true,
+                          items: printers,
+                          dropdownSearchTextAlignVertical: TextAlignVertical.center,
+                          compareFn: (printer, selectedPrinter) {
+                            return printer == selectedPrinter;
+                          },
+                          emptyBuilder: (BuildContext context, String? searchEntry) {
+                            return const Padding(
+                              padding: EdgeInsets.all(6.0),
+                              child: Text('No results found', style: TextStyle(fontSize: 14.0)),
+                            );
+                          },
+                          searchFieldProps: TextFieldProps(
+                            style: const TextStyle(fontSize: 14.0, color: Colors.black),
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                            ),
+                          ),
+                          dropdownSearchDecoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.only(top: 11.0, bottom: 8.0, left: 8.0),
+                          ),
+                          onChanged: (selectedValue) {
+                            if (selectedValue != null) {
+                              selectedAddress = selectedValue.toString();
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      InkWell(
+                        onTap: () {
+                          SiiPrinterCore.getPrinters().then((value) {
+                            setState(() {
+                              printers = value;
+                            });
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          color: Colors.blue,
+                          child: const Icon(Icons.search),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20.0),
+                InkWell(
+                  onTap: () {
+                    if (selectedAddress == null) {
+                      showDialog(context, "Please choose printer");
+                      return;
+                    }
+                    SiiPrinterCore.connect(selectedAddress!).then((value) {
+                      if (value) {
+                        showDialog(context, "Connected");
+                      } else {
+                        showDialog(context, "Error occur");
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12.0),
+                    color: Colors.blue,
+                    child: const Text('Connect'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  void showDialog(BuildContext context, String message) {
+    showCupertinoDialog(
+        context: context,
+        builder: (context) {
+          return CupertinoAlertDialog(
+            content: Text(message),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        });
   }
 }

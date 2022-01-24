@@ -1,7 +1,15 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sii_printer_plugin/sii_printer_core.dart';
+import 'package:sii_printer_plugin/type/character_bold.dart';
+import 'package:sii_printer_plugin/type/character_reverse.dart';
+import 'package:sii_printer_plugin/type/character_scale.dart';
+import 'package:sii_printer_plugin/type/character_underline.dart';
+import 'package:sii_printer_plugin/type/print_alignment.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,6 +23,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   List<dynamic>? printers;
   String? selectedAddress;
+  bool isConnected = false;
 
   @override
   Widget build(BuildContext context) {
@@ -93,8 +102,10 @@ class _MyAppState extends State<MyApp> {
                     }
                     SiiPrinterCore.connect(selectedAddress!).then((value) {
                       if (value) {
+                        isConnected = true;
                         showDialog(context, "Connected");
                       } else {
+                        isConnected = false;
                         showDialog(context, "Error occur");
                       }
                     });
@@ -105,6 +116,110 @@ class _MyAppState extends State<MyApp> {
                     child: const Text('Connect'),
                   ),
                 ),
+                const SizedBox(height: 40.0),
+                Expanded(
+                    child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            if (!isConnected) {
+                              showDialog(context, "Please connect to printer first");
+                              return;
+                            }
+                            SiiPrinterCore.printText(
+                                    "Flutter is an open-source UI software development kit created by Google.")
+                                .then((value) {
+                              if (!value) {
+                                showDialog(context, "Error occur");
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12.0),
+                            color: Colors.blue,
+                            child: const Text('Print text'),
+                          ),
+                        ),
+                        const SizedBox(width: 20.0),
+                        InkWell(
+                          onTap: () {
+                            if (!isConnected) {
+                              showDialog(context, "Please connect to printer first");
+                              return;
+                            }
+                            SiiPrinterCore.printTextEx(
+                              "It is used to develop cross platform applications for Android, iOS,...",
+                              printAlignment: PrintAlignment.alignmentRight,
+                              characterBold: CharacterBold.bold,
+                              characterReverse: CharacterReverse.reverse,
+                              characterScale: CharacterScale.vartical2Horizontal2,
+                              characterUnderline: CharacterUnderline.underline1,
+                            ).then((value) {
+                              if (!value) {
+                                showDialog(context, "Error occur");
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12.0),
+                            color: Colors.blue,
+                            child: const Text('Print text ex'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        InkWell(
+                          onTap: () async {
+                            if (!isConnected) {
+                              showDialog(context, "Please connect to printer first");
+                              return;
+                            }
+                            final ByteData logoBytes = await rootBundle.load(
+                              'assets/images/logo.jpg',
+                            );
+                            SiiPrinterCore.printBase64Image(base64.encode(Uint8List.view(logoBytes.buffer)))
+                                .then((value) {
+                              if (!value) {
+                                showDialog(context, "Error occur");
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12.0),
+                            color: Colors.blue,
+                            child: const Text('Printer image'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 40.0),
+                    InkWell(
+                      onTap: () async {
+                        if (!isConnected) {
+                          showDialog(context, "Please connect to printer first");
+                          return;
+                        }
+                        SiiPrinterCore.cutPaper().then((value) {
+                          if (!value) {
+                            showDialog(context, "Error occur");
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12.0),
+                        color: Colors.blue,
+                        child: const Text('Cut paper'),
+                      ),
+                    ),
+                  ],
+                )),
               ],
             ),
           ),

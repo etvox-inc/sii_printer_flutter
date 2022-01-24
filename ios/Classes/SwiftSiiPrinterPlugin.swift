@@ -21,6 +21,14 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
           getPrinters(call, result)
       case "connect":
           connect(call, result)
+      case "printText":
+          printText(call, result)
+      case "printTextEx":
+          printTextEx(call, result)
+      case "printBase64Image":
+          printBinary(call, result)
+      case "cutPaper":
+          cutPaper(call, result)
       default:
           result(nil)
       }
@@ -54,4 +62,70 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
       }
 
   }
+    
+    private func disconnect(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        do {
+            try self._printer.disconnect()
+            result(true)
+        } catch {
+            result(false)
+        }
+    }
+
+    private func printTextEx(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String : Any] else {return}
+        let text = args["text"] as! String
+        let bold = args["characterBold"] as! String
+        let reverse = args["characterReverse"] as! String
+        let underline = args["characterUnderline"] as! String
+        let scale = args["characterScale"] as! String
+        let alignment = args["printAlignment"] as! String
+        let font = args["characterFont"] as! String
+        
+        do {
+            try self._printer.sendTextEx(
+                text,
+                bold: MethodUtil.getCharacterBoldFromString(bold),
+                underline: MethodUtil.getCharacterUnderlineFromString(underline),
+                reverse: MethodUtil.getCharacterReverseFromString(reverse),
+                font: MethodUtil.getCharacterFontFromString(font),
+                scale: MethodUtil.getCharacterScaleFromString(scale),
+                alignment: MethodUtil.getPrintAlignmentFromString(alignment))
+            result(true)
+        } catch let error as NSError {
+            result(MethodUtil.getErrorMessage(Int32(error.code)))
+        }
+    }
+
+    private func printText(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String : Any] else {return}
+        let text = args["text"] as! String
+        do {
+            try self._printer.sendText(text)
+            result(true)
+        } catch {
+            result(false)
+        }
+    }
+
+    private func printBinary(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String : Any] else {return}
+        let data = args["imageData"] as! String
+        do {
+            let dataDecoded: Data = Data.init(base64Encoded: data, options: .init(rawValue: 0))!
+            try self._printer.sendBinary(dataDecoded)
+            result(true)
+        } catch {
+            result(false)
+        }
+    }
+
+    private func cutPaper(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        do {
+            try self._printer.cutPaper(CuttingMethod.SII_PM_CUT_FULL)
+            result(true)
+        } catch {
+            result(false)
+        }
+    }
 }

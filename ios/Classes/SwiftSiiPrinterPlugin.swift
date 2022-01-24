@@ -109,7 +109,7 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
     }
     
     private func printLogo(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
-        let filePath = Bundle.main.path(forResource: "logo", ofType: "jpg")
+        let filePath = Bundle.main.path(forResource: "logo", ofType: "jpg") as! String
         do {
             try self._printer.sendDataFile(filePath)
             result(true)

@@ -43,11 +43,8 @@ class SiiPrinterCore {
     return isSuccessfull;
   }
 
-  static Future<bool> printBase64Image(String base64,
-      {PrintAlignment printAlignment = PrintAlignment.alignmentCenter}) async {
-    final bool isSuccessfull = await _channel.invokeMethod('printBase64Image', {
-      "imageData": base64,
-    });
+  static Future<bool> printLogo() async {
+    final bool isSuccessfull = await _channel.invokeMethod('printLogo');
     return isSuccessfull;
   }
 

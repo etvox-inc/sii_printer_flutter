@@ -1,9 +1,6 @@
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:sii_printer_plugin/sii_printer_core.dart';
 import 'package:sii_printer_plugin/type/character_bold.dart';
 import 'package:sii_printer_plugin/type/character_reverse.dart';
@@ -181,11 +178,7 @@ class _MyAppState extends State<MyApp> {
                               showDialog(context, "Please connect to printer first");
                               return;
                             }
-                            final ByteData logoBytes = await rootBundle.load(
-                              'assets/images/logo.jpg',
-                            );
-                            SiiPrinterCore.printBase64Image(base64.encode(Uint8List.view(logoBytes.buffer)))
-                                .then((value) {
+                            SiiPrinterCore.printLogo().then((value) {
                               if (!value) {
                                 showDialog(context, "Error occur");
                               }
@@ -194,7 +187,7 @@ class _MyAppState extends State<MyApp> {
                           child: Container(
                             padding: const EdgeInsets.all(12.0),
                             color: Colors.blue,
-                            child: const Text('Printer image'),
+                            child: const Text('Printer logo'),
                           ),
                         ),
                       ],

@@ -25,8 +25,8 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
           printText(call, result)
       case "printTextEx":
           printTextEx(call, result)
-      case "printBase64Image":
-          printBinary(call, result)
+      case "printLogo":
+          printLogo(call, result)
       case "cutPaper":
           cutPaper(call, result)
       default:
@@ -107,13 +107,11 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
             result(false)
         }
     }
-
-    private func printBinary(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
-        guard let args = call.arguments as? [String : Any] else {return}
-        let data = args["imageData"] as! String
+    
+    private func printLogo(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        let filePath = Bundle.main.path(forResource: "logo", ofType: "jpg")
         do {
-            let dataDecoded: Data = Data.init(base64Encoded: data, options: .init(rawValue: 0))!
-            try self._printer.sendBinary(dataDecoded)
+            try self._printer.sendDataFile(filePath)
             result(true)
         } catch {
             result(false)

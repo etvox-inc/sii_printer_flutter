@@ -31,7 +31,7 @@ class SiiPrinterCore {
     CharacterScale characterScale = CharacterScale.vartical1Horizontal1,
     PrintAlignment printAlignment = PrintAlignment.alignmentLeft,
   }) async {
-    final bool isSuccessfull = await _channel.invokeMethod('printText', {
+    final bool isSuccessfull = await _channel.invokeMethod('printTextEx', {
       "text": text,
       "characterBold": characterBold.typeName,
       "characterReverse": characterReverse.typeName,

@@ -25,11 +25,11 @@ class SiiPrinterCore {
 
   static Future<bool> printTextEx(
     String text, {
-    required CharacterBold characterBold,
-    required CharacterUnderline characterUnderline,
-    required CharacterReverse characterReverse,
-    required CharacterScale characterScale,
-    required PrintAlignment printAlignment,
+    CharacterBold characterBold = CharacterBold.normal,
+    CharacterUnderline characterUnderline = CharacterUnderline.underlineCancel,
+    CharacterReverse characterReverse = CharacterReverse.reverseCancel,
+    CharacterScale characterScale = CharacterScale.vartical1Horizontal1,
+    PrintAlignment printAlignment = PrintAlignment.alignmentLeft,
   }) async {
     final bool isSuccessfull = await _channel.invokeMethod('printText', {
       "text": text,

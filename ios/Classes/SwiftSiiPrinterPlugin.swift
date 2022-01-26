@@ -153,6 +153,10 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
     }
     
     private func isConnect(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        if (self._printer == nil) {
+            result(false)
+            return
+        }
         let isConnect = self._printer.isConnect
         if isConnect {
             result(true)

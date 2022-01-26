@@ -5,6 +5,9 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
     fileprivate let SII_EXTERNAL_ACCESSORY_PROTOCOL = "com.sii-ps.siieap"
     fileprivate let SEGMENT_BLUETOOTH = 1
     fileprivate var _printer: SIIPrinterManagerWrapper!
+    fileprivate let _buttonTappQueue = DispatchQueue(label: "com.sii-ps.button")
+    
+    let _successfullStatus = 0
 
     @objc
     internal var _printerTypeSeg: UISegmentedControl!
@@ -19,18 +22,28 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
       switch call.method {
       case "getPrinters":
           getPrinters(call, result)
+          break
       case "connect":
           connect(call, result)
+          break
       case "printText":
           printText(call, result)
+          break
       case "printTextEx":
           printTextEx(call, result)
+          break
       case "printLogo":
           printLogo(call, result)
+          break
       case "cutPaper":
           cutPaper(call, result)
+          break
+      case "isConnect":
+          isConnect(call, result)
+          break
       default:
           result(nil)
+          break
       }
   }
 
@@ -53,22 +66,26 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
   private func connect(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
       guard let args = call.arguments as? [String : Any] else {return}
       let printerAddress = args["printerAddress"] as! String
-      self._printer = SIIPrinterManagerWrapper()
-      do {
-          try self._printer.connect(SII_PM_PRINTER_MODEL_MP_B20, address: printerAddress, portType: SII_PM_PRINTER_PORT_TYPE_BLUETOOTH)
-          result(true)
-      } catch {
-          result(false)
+      self._buttonTappQueue.async {
+          if (self._printer == nil) {
+              self._printer = SIIPrinterManagerWrapper()
+              self._printer.internationalCharacter = SII_PM_COUNTRY_JAPAN
+          }
+          do {
+              try self._printer.connect(SII_PM_PRINTER_MODEL_MP_B20, address: printerAddress, portType: SII_PM_PRINTER_PORT_TYPE_BLUETOOTH)
+              result(self._successfullStatus)
+          } catch let error as NSError {
+              result(Int32(error.code))
+          }
       }
-
   }
     
     private func disconnect(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
         do {
             try self._printer.disconnect()
-            result(true)
-        } catch {
-            result(false)
+            result(self._successfullStatus)
+        } catch let error as NSError {
+            result(Int32(error.code))
         }
     }
 
@@ -82,47 +99,64 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
         let alignment = args["printAlignment"] as! String
         let font = args["characterFont"] as! String
         
-        do {
-            try self._printer.sendTextEx(
-                text,
-                bold: MethodUtil.getCharacterBoldFromString(bold),
-                underline: MethodUtil.getCharacterUnderlineFromString(underline),
-                reverse: MethodUtil.getCharacterReverseFromString(reverse),
-                font: MethodUtil.getCharacterFontFromString(font),
-                scale: MethodUtil.getCharacterScaleFromString(scale),
-                alignment: MethodUtil.getPrintAlignmentFromString(alignment))
-            result(true)
-        } catch let error as NSError {
-            result(MethodUtil.getErrorMessage(Int32(error.code)))
+        self._buttonTappQueue.async {
+            do {
+                try self._printer.sendTextEx(
+                    text,
+                    bold: MethodUtil.getCharacterBoldFromString(bold),
+                    underline: MethodUtil.getCharacterUnderlineFromString(underline),
+                    reverse: MethodUtil.getCharacterReverseFromString(reverse),
+                    font: MethodUtil.getCharacterFontFromString(font),
+                    scale: MethodUtil.getCharacterScaleFromString(scale),
+                    alignment: MethodUtil.getPrintAlignmentFromString(alignment))
+                result(self._successfullStatus)
+            } catch let error as NSError {
+                result(Int32(error.code))
+            }
         }
     }
 
     private func printText(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
         guard let args = call.arguments as? [String : Any] else {return}
         let text = args["text"] as! String
-        do {
-            try self._printer.sendText(text)
-            result(true)
-        } catch {
-            result(false)
+        self._buttonTappQueue.async {
+            do {
+                try self._printer.sendText(text)
+                result(self._successfullStatus)
+            } catch let error as NSError {
+                result(Int32(error.code))
+            }
         }
     }
     
     private func printLogo(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
         let filePath = Bundle.main.path(forResource: "logo", ofType: "jpg")
-        do {
-            try self._printer.sendDataFile(filePath)
-            result(true)
-        } catch {
-            result(false)
+        self._buttonTappQueue.async {
+            do {
+                try self._printer.sendDataFile(filePath)
+                result(self._successfullStatus)
+            } catch let error as NSError {
+                result(Int32(error.code))
+            }
         }
     }
 
     private func cutPaper(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
-        do {
-            try self._printer.cutPaper(CuttingMethod.SII_PM_CUT_FULL)
+        self._buttonTappQueue.async {
+            do {
+                try self._printer.cutPaper(CuttingMethod.SII_PM_CUT_FULL)
+                result(self._successfullStatus)
+            } catch let error as NSError {
+                result(Int32(error.code))
+            }
+        }
+    }
+    
+    private func isConnect(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
+        let isConnect = self._printer.isConnect
+        if isConnect {
             result(true)
-        } catch {
+        } else {
             result(false)
         }
     }

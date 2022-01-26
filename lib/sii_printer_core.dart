@@ -4,6 +4,8 @@ import 'package:sii_printer_plugin/type/character_reverse.dart';
 import 'package:sii_printer_plugin/type/character_scale.dart';
 import 'package:sii_printer_plugin/type/character_underline.dart';
 import 'package:sii_printer_plugin/type/print_alignment.dart';
+import 'package:sii_printer_plugin/type/sii_error_code.dart';
+import 'package:sii_printer_plugin/utils/method_utils.dart';
 
 class SiiPrinterCore {
   static const MethodChannel _channel = MethodChannel('sii_printer_plugin');
@@ -13,17 +15,21 @@ class SiiPrinterCore {
     return printers;
   }
 
-  static Future<bool> connect(String printerAddress) async {
-    final bool isConnected = await _channel.invokeMethod('connect', {"printerAddress": printerAddress});
-    return isConnected;
+  static Future<SiiErrorCode> connect(String printerAddress) async {
+    final int statusCode = await _channel.invokeMethod('connect', {"printerAddress": printerAddress});
+    var errorCode = MethodUtils.errorName(statusCode);
+    print(errorCode.message);
+    return errorCode;
   }
 
-  static Future<bool> printText(String text) async {
-    final bool isSuccessfull = await _channel.invokeMethod('printText', {"text": text});
-    return isSuccessfull;
+  static Future<SiiErrorCode> printText(String text) async {
+    final int statusCode = await _channel.invokeMethod('printText', {"text": text});
+    var errorCode = MethodUtils.errorName(statusCode);
+    print(errorCode.message);
+    return errorCode;
   }
 
-  static Future<bool> printTextEx(
+  static Future<SiiErrorCode> printTextEx(
     String text, {
     CharacterBold characterBold = CharacterBold.normal,
     CharacterUnderline characterUnderline = CharacterUnderline.underlineCancel,
@@ -31,7 +37,7 @@ class SiiPrinterCore {
     CharacterScale characterScale = CharacterScale.vartical1Horizontal1,
     PrintAlignment printAlignment = PrintAlignment.alignmentLeft,
   }) async {
-    final bool isSuccessfull = await _channel.invokeMethod('printText', {
+    final int statusCode = await _channel.invokeMethod('printText', {
       "text": text,
       "characterBold": characterBold.typeName,
       "characterReverse": characterReverse.typeName,
@@ -40,16 +46,27 @@ class SiiPrinterCore {
       "printAlignment": printAlignment.typeName,
       "characterFont": printAlignment.typeName,
     });
-    return isSuccessfull;
+    var errorCode = MethodUtils.errorName(statusCode);
+    print(errorCode.message);
+    return errorCode;
   }
 
-  static Future<bool> printLogo() async {
-    final bool isSuccessfull = await _channel.invokeMethod('printLogo');
-    return isSuccessfull;
+  static Future<SiiErrorCode> printLogo() async {
+    final int statusCode = await _channel.invokeMethod('printLogo');
+    var errorCode = MethodUtils.errorName(statusCode);
+    print(errorCode.message);
+    return errorCode;
   }
 
-  static Future<bool> cutPaper() async {
-    final bool isSuccessfull = await _channel.invokeMethod('cutPaper');
-    return isSuccessfull;
+  static Future<SiiErrorCode> cutPaper() async {
+    final int statusCode = await _channel.invokeMethod('cutPaper');
+    var errorCode = MethodUtils.errorName(statusCode);
+    print(errorCode.message);
+    return errorCode;
+  }
+
+  static Future<bool> isConnect() async {
+    final isConnecting = await _channel.invokeMethod('isConnect');
+    return isConnecting;
   }
 }

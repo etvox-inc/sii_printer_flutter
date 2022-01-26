@@ -7,6 +7,7 @@ import 'package:sii_printer_plugin/type/character_reverse.dart';
 import 'package:sii_printer_plugin/type/character_scale.dart';
 import 'package:sii_printer_plugin/type/character_underline.dart';
 import 'package:sii_printer_plugin/type/print_alignment.dart';
+import 'package:sii_printer_plugin/type/sii_error_code.dart';
 
 void main() {
   runApp(MyApp());
@@ -98,7 +99,7 @@ class _MyAppState extends State<MyApp> {
                       return;
                     }
                     SiiPrinterCore.connect(selectedAddress!).then((value) {
-                      if (value) {
+                      if (value == SiiErrorCode.SII_PM_ERROR_NONE) {
                         isConnected = true;
                         showDialog(context, "Connected");
                       } else {
@@ -129,9 +130,7 @@ class _MyAppState extends State<MyApp> {
                             SiiPrinterCore.printText(
                                     "Flutter is an open-source UI software development kit created by Google.")
                                 .then((value) {
-                              if (!value) {
-                                showDialog(context, "Error occur");
-                              }
+                              handleValue(value);
                             });
                           },
                           child: Container(
@@ -155,9 +154,7 @@ class _MyAppState extends State<MyApp> {
                               characterScale: CharacterScale.vartical2Horizontal2,
                               characterUnderline: CharacterUnderline.underline1,
                             ).then((value) {
-                              if (!value) {
-                                showDialog(context, "Error occur");
-                              }
+                              handleValue(value);
                             });
                           },
                           child: Container(
@@ -179,9 +176,7 @@ class _MyAppState extends State<MyApp> {
                               return;
                             }
                             SiiPrinterCore.printLogo().then((value) {
-                              if (!value) {
-                                showDialog(context, "Error occur");
-                              }
+                              handleValue(value);
                             });
                           },
                           child: Container(
@@ -200,9 +195,7 @@ class _MyAppState extends State<MyApp> {
                           return;
                         }
                         SiiPrinterCore.cutPaper().then((value) {
-                          if (!value) {
-                            showDialog(context, "Error occur");
-                          }
+                          handleValue(value);
                         });
                       },
                       child: Container(
@@ -237,5 +230,11 @@ class _MyAppState extends State<MyApp> {
             ],
           );
         });
+  }
+
+  void handleValue(SiiErrorCode code) {
+    if (code != SiiErrorCode.SII_PM_ERROR_NONE) {
+      showDialog(context, code.message);
+    }
   }
 }

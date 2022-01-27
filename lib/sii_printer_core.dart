@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:sii_printer_plugin/type/character_bold.dart';
+import 'package:sii_printer_plugin/type/character_font.dart';
 import 'package:sii_printer_plugin/type/character_reverse.dart';
 import 'package:sii_printer_plugin/type/character_scale.dart';
 import 'package:sii_printer_plugin/type/character_underline.dart';
@@ -36,6 +37,7 @@ class SiiPrinterCore {
     CharacterReverse characterReverse = CharacterReverse.reverseCancel,
     CharacterScale characterScale = CharacterScale.vartical1Horizontal1,
     PrintAlignment printAlignment = PrintAlignment.alignmentLeft,
+    CharacterFont font = CharacterFont.fontA,
   }) async {
     final int statusCode = await _channel.invokeMethod('printTextEx', {
       "text": text,
@@ -44,7 +46,7 @@ class SiiPrinterCore {
       "characterUnderline": characterUnderline.typeName,
       "characterScale": characterScale.typeName,
       "printAlignment": printAlignment.typeName,
-      "characterFont": printAlignment.typeName,
+      "characterFont": font.typeName,
     });
     var errorCode = MethodUtils.errorName(statusCode);
     print(errorCode.message);

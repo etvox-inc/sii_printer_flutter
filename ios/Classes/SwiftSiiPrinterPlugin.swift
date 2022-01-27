@@ -69,6 +69,7 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
       self._buttonTappQueue.async {
           if (self._printer == nil) {
               self._printer = SIIPrinterManagerWrapper()
+              self._printer.codePage = SII_PM_CODE_PAGE_KATAKANA
               self._printer.internationalCharacter = SII_PM_COUNTRY_JAPAN
           }
           do {

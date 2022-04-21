@@ -2,29 +2,29 @@ package com.siiprinter.sii_printer_plugin
 
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
-import android.content.res.AssetManager
 import android.util.Log
 import androidx.annotation.NonNull
 import com.seikoinstruments.sdk.thermalprinter.*
 import com.seikoinstruments.sdk.thermalprinter.printerenum.CuttingMethod
 import com.seikoinstruments.sdk.thermalprinter.printerenum.Dithering
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
 
 /** SiiPrinterPlugin */
-class SiiPrinterPlugin : FlutterPlugin, MethodCallHandler {
+class SiiPrinterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
+    private lateinit var devicesEventChannel: EventChannel
 
     /** PrinterManager SDK  */
     private var mPrinterManager: PrinterManager? = null
@@ -38,11 +38,13 @@ class SiiPrinterPlugin : FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(this)
         mContext = flutterPluginBinding.applicationContext
         mFlutterPluginBinding = flutterPluginBinding
+
+        devicesEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "sii_printer_plugin_device_event")
+        devicesEventChannel.setStreamHandler(this)
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
-            "getPrinters" -> getPrinters(call, result)
             "connect" -> connect(call, result)
             "printText" -> printText(call, result)
             "printTextEx" -> printTextEx(call, result)
@@ -135,7 +137,7 @@ class SiiPrinterPlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun getPrinters(@NonNull call: MethodCall, @NonNull result: Result) {
+    private fun getPrinters(arguments: Any?, events: EventChannel.EventSink?) {
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
         var printerList: MutableList<Map<String, Any>>
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
@@ -143,11 +145,13 @@ class SiiPrinterPlugin : FlutterPlugin, MethodCallHandler {
         }
         try {
             mPrinterManager?.startDiscoveryPrinter {
-                printerList = finishEvent(it, result)
-                result.success(printerList)
+                printerList = finishEvent(it)
+                events?.success(printerList)
+                events?.endOfStream()
             }
         } catch (e: PrinterException) {
-            result.success(e.errorCode)
+            Log.d("Printer exception", e.toString())
+            events?.success(e.errorCode)
         }
     }
 
@@ -155,7 +159,7 @@ class SiiPrinterPlugin : FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(null)
     }
 
-    private fun finishEvent(event: PrinterEvent, @NonNull result: Result): MutableList<Map<String, Any>> {
+    private fun finishEvent(event: PrinterEvent): MutableList<Map<String, Any>> {
         val devices = mutableListOf<Map<String, Any>>()
         when (event.eventType) {
             PrinterEvent.EVENT_FINISHED_DISCOVERY, PrinterEvent.EVENT_CANCELED_DISCOVERY -> {
@@ -179,14 +183,22 @@ class SiiPrinterPlugin : FlutterPlugin, MethodCallHandler {
         val count = list?.size ?: 0
         var index = 0
         while (index < count) {
-            val info = list?.get(index)
+            val info = list?.get(index) ?: continue
             val item = DeviceListItem(
-                info?.printerModelName,
-                info?.bluetoothAddress
+                info.printerModelName,
+                info.bluetoothAddress
             )
             printerList.add(item)
             index++
         }
         return printerList;
+    }
+
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        getPrinters(arguments, events)
+    }
+
+    override fun onCancel(arguments: Any?) {
+
     }
 }

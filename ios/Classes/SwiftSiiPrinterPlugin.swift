@@ -136,22 +136,14 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
     }
     
     private func printLogo(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
-        let filePath = Bundle.main.path(forResource: "logo", ofType: "jpg")
         guard let args = call.arguments as? [String : Any] else {return}
         let assetsImage = args["assets_image"] as! String
-        let type = args["type"] as! String?
         self._buttonTappQueue.async {
             do {
-                var path: String?
                 let key: String = self._registrar.lookupKey(forAsset: assetsImage)
                 let topPath = Bundle.main.path(forResource: key, ofType: nil)
-                if (type == "type1") {
-                    path = key
-                } else {
-                    path = topPath
-                }
-                debugPrint(path ?? "Not found file path")
-                try self._printer.sendDataFile(path)
+                debugPrint(topPath ?? "Not found file path")
+                try self._printer.sendDataFile(topPath)
                 result(self._successfullStatus)
             } catch let error as NSError {
                 result(Int32(error.code))

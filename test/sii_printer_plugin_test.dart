@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sii_printer_plugin/sii_printer_plugin.dart';
 
 void main() {
   const MethodChannel channel = MethodChannel('sii_printer_plugin');
@@ -15,9 +14,5 @@ void main() {
 
   tearDown(() {
     channel.setMockMethodCallHandler(null);
-  });
-
-  test('getPlatformVersion', () async {
-    expect(await SiiPrinterPlugin.platformVersion, '42');
   });
 }

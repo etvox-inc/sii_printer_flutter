@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:sii_printer_plugin/bluetooth_device.dart';
 import 'package:sii_printer_plugin/sii_printer_core.dart';
 import 'package:sii_printer_plugin/type/character_bold.dart';
 import 'package:sii_printer_plugin/type/character_reverse.dart';
@@ -10,17 +12,19 @@ import 'package:sii_printer_plugin/type/print_alignment.dart';
 import 'package:sii_printer_plugin/type/sii_error_code.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  List<dynamic>? printers;
-  String? selectedAddress;
+  List<BluetoothDevice>? printers;
+  BluetoothDevice? selectedPrinter;
   bool isConnected = false;
 
   @override
@@ -40,14 +44,14 @@ class _MyAppState extends State<MyApp> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: DropdownSearch<dynamic>(
+                        child: DropdownSearch<BluetoothDevice>(
                           mode: Mode.DIALOG,
                           showSearchBox: true,
                           showSelectedItems: true,
                           items: printers,
                           dropdownSearchTextAlignVertical: TextAlignVertical.center,
                           compareFn: (printer, selectedPrinter) {
-                            return printer == selectedPrinter;
+                            return printer?.macAddress == selectedPrinter?.macAddress;
                           },
                           emptyBuilder: (BuildContext context, String? searchEntry) {
                             return const Padding(
@@ -62,26 +66,22 @@ class _MyAppState extends State<MyApp> {
                               contentPadding: EdgeInsets.symmetric(horizontal: 4.0),
                             ),
                           ),
+                          dropdownBuilder: _customDropDownBuilder,
+                          popupItemBuilder: _customPopupItemBuilder,
                           dropdownSearchDecoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.only(top: 11.0, bottom: 8.0, left: 8.0),
                           ),
                           onChanged: (selectedValue) {
                             if (selectedValue != null) {
-                              selectedAddress = selectedValue.toString();
+                              selectedPrinter = selectedValue;
                             }
                           },
                         ),
                       ),
                       const SizedBox(width: 8.0),
                       InkWell(
-                        onTap: () {
-                          SiiPrinterCore.getPrinters().then((value) {
-                            setState(() {
-                              printers = value;
-                            });
-                          });
-                        },
+                        onTap: discoveryPrinter,
                         child: Container(
                           padding: const EdgeInsets.all(12.0),
                           color: Colors.blue,
@@ -94,11 +94,11 @@ class _MyAppState extends State<MyApp> {
                 const SizedBox(height: 20.0),
                 InkWell(
                   onTap: () {
-                    if (selectedAddress == null) {
+                    if (selectedPrinter == null) {
                       showDialog(context, "Please choose printer");
                       return;
                     }
-                    SiiPrinterCore.connect(selectedAddress!).then((value) {
+                    SiiPrinterCore.connect(selectedPrinter!).then((value) {
                       if (value == SiiErrorCode.SII_PM_ERROR_NONE) {
                         isConnected = true;
                         showDialog(context, "Connected");
@@ -166,26 +166,21 @@ class _MyAppState extends State<MyApp> {
                       ],
                     ),
                     const SizedBox(height: 20.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () async {
-                            if (!isConnected) {
-                              showDialog(context, "Please connect to printer first");
-                              return;
-                            }
-                            SiiPrinterCore.printLogo().then((value) {
-                              handleValue(value);
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(12.0),
-                            color: Colors.blue,
-                            child: const Text('Printer logo'),
-                          ),
-                        ),
-                      ],
+                    InkWell(
+                      onTap: () async {
+                        if (!isConnected) {
+                          showDialog(context, "Please connect to printer first");
+                          return;
+                        }
+                        SiiPrinterCore.printLogo("assets/images/logo.jpg").then((value) {
+                          handleValue(value);
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12.0),
+                        color: Colors.blue,
+                        child: const Text('Printer logo'),
+                      ),
                     ),
                     const SizedBox(height: 40.0),
                     InkWell(
@@ -211,6 +206,58 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
       ),
+    );
+  }
+
+  void discoveryPrinter() {
+    if (Platform.isAndroid) {
+      SiiPrinterCore.getPrintersInAndroid().listen((devices) {
+        setState(() {
+          printers = devices;
+        });
+      });
+    }
+    if (Platform.isIOS) {
+      SiiPrinterCore.getPrintersInIOS().then((value) {
+        setState(() {
+          printers = value;
+        });
+      });
+    }
+  }
+
+  Widget _customPopupItemBuilder(BuildContext context, BluetoothDevice? item, bool isSelected) {
+    if (isSelected) {
+      return Container(
+        padding: const EdgeInsets.all(6.0),
+        color: Colors.blue,
+        child: Text(
+          item?.name ?? (item?.macAddress ?? ''),
+          style: const TextStyle(fontSize: 16.0, color: Colors.white),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.all(6.0),
+      child: Text(
+        item?.name ?? (item?.macAddress ?? ''),
+        style: const TextStyle(
+          fontSize: 16.0,
+        ),
+      ),
+    );
+  }
+
+  Widget _customDropDownBuilder(BuildContext context, BluetoothDevice? bluetoothDevice) {
+    if (bluetoothDevice == null) {
+      return const Text(
+        "施設を選択して下さい",
+        style: TextStyle(fontSize: 16.0),
+      );
+    }
+    return Text(
+      bluetoothDevice.name,
+      style: const TextStyle(fontSize: 24.0),
     );
   }
 

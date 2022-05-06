@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:sii_printer_plugin/bluetooth_device.dart';
 import 'package:sii_printer_plugin/type/character_bold.dart';
 import 'package:sii_printer_plugin/type/character_font.dart';
 import 'package:sii_printer_plugin/type/character_reverse.dart';
@@ -11,13 +14,40 @@ import 'package:sii_printer_plugin/utils/method_utils.dart';
 
 class SiiPrinterCore {
   static const MethodChannel _channel = MethodChannel('sii_printer_plugin');
+  static const EventChannel _devicesEventchannel = EventChannel('sii_printer_plugin_device_event');
 
-  static Future<List<dynamic>?> getPrinters() async {
-    final List<dynamic>? printers = await _channel.invokeMethod('getPrinters');
-    return printers;
+  /// @return list of [BluetoothDevice]
+  /// Only working in IOS platform
+  static Future<List<BluetoothDevice>> getPrintersInIOS() async {
+    List<BluetoothDevice> bluetoothDevices = [];
+    if (Platform.isIOS) {
+      var devices = await _channel.invokeMethod('getPrinters');
+      if (devices != null) {
+        bluetoothDevices =
+            List.from(devices.map((device) => BluetoothDevice.fromMap(Map<String, dynamic>.from(device))));
+      }
+      return bluetoothDevices;
+    }
+    throw Exception("Not implement for this platform");
   }
 
-  static Future<SiiErrorCode> connect(String printerAddress) async {
+  /// @return list of [BluetoothDevice]
+  /// Only working in Android platform
+  static Stream<List<BluetoothDevice>> getPrintersInAndroid() {
+    if (Platform.isAndroid) {
+      return _devicesEventchannel.receiveBroadcastStream().map(
+              (devices) => List.from(devices.map((device) => BluetoothDevice.fromMap(Map<String, dynamic>.from(device)))));
+    }
+    throw Exception("Not implement for this platform");
+  }
+
+  static Future<SiiErrorCode> connect(BluetoothDevice bluetoothDevice) async {
+    String printerAddress;
+    if (Platform.isIOS) {
+      printerAddress = bluetoothDevice.name;
+    } else {
+      printerAddress = bluetoothDevice.macAddress;
+    }
     final int statusCode = await _channel.invokeMethod('connect', {"printerAddress": printerAddress});
     var errorCode = MethodUtils.errorName(statusCode);
     debugPrint(errorCode.message);
@@ -54,9 +84,9 @@ class SiiPrinterCore {
     return errorCode;
   }
 
-  static Future<SiiErrorCode> printLogo() async {
+  static Future<SiiErrorCode> printLogo(String assetImagePath) async {
     final int statusCode = await _channel.invokeMethod('printLogo', {
-      "assets_image": "assets/images/logo.jpg",
+      "assets_image": assetImagePath,
     });
     var errorCode = MethodUtils.errorName(statusCode);
     debugPrint(errorCode.message);

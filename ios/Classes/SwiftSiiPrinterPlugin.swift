@@ -55,7 +55,10 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
               if obj.protocolStrings.index(of: SII_EXTERNAL_ACCESSORY_PROTOCOL) != nil {
                   let macAddressOptional = obj.value(forKey: "macAddress") as? String
                   if macAddressOptional != nil {
-                        printerList.add(obj.name)
+					printerList.add([
+							"device_name": obj.name,
+							"mac_address": macAddressOptional
+						])
                   }
               }
           }

@@ -151,7 +151,7 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
                     path = topPath
                 }
                 debugPrint(path ?? "Not found file path")
-                try self._printer.sendDataFile(filePath)
+                try self._printer.sendDataFile(path)
                 result(self._successfullStatus)
             } catch let error as NSError {
                 result(Int32(error.code))

@@ -175,14 +175,31 @@ class _MyAppState extends State<MyApp> {
                               showDialog(context, "Please connect to printer first");
                               return;
                             }
-                            SiiPrinterCore.printLogo().then((value) {
+                            SiiPrinterCore.printLogo("type1").then((value) {
                               handleValue(value);
                             });
                           },
                           child: Container(
                             padding: const EdgeInsets.all(12.0),
                             color: Colors.blue,
-                            child: const Text('Printer logo'),
+                            child: const Text('Printer logo 1'),
+                          ),
+                        ),
+                        const SizedBox(width: 20.0),
+                        InkWell(
+                          onTap: () async {
+                            if (!isConnected) {
+                              showDialog(context, "Please connect to printer first");
+                              return;
+                            }
+                            SiiPrinterCore.printLogo("type2").then((value) {
+                              handleValue(value);
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12.0),
+                            color: Colors.blue,
+                            child: const Text('Printer logo 2'),
                           ),
                         ),
                       ],

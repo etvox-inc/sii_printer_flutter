@@ -53,8 +53,11 @@ class SiiPrinterCore {
     return errorCode;
   }
 
-  static Future<SiiErrorCode> printLogo() async {
-    final int statusCode = await _channel.invokeMethod('printLogo');
+  static Future<SiiErrorCode> printLogo(String type) async {
+    final int statusCode = await _channel.invokeMethod('printLogo', {
+      "assets_image": "assets/images/logo.jpg",
+      "type": type
+    });
     var errorCode = MethodUtils.errorName(statusCode);
     print(errorCode.message);
     return errorCode;

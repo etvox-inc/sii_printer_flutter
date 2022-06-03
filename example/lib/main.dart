@@ -175,7 +175,7 @@ class _MyAppState extends State<MyApp> {
                               showDialog(context, "Please connect to printer first");
                               return;
                             }
-                            SiiPrinterCore.printLogo("assets/images/logo.jpg").then((value) {
+                            SiiPrinterCore.printLogo().then((value) {
                               handleValue(value);
                             });
                           },

@@ -6,20 +6,15 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
     fileprivate let SEGMENT_BLUETOOTH = 1
     fileprivate var _printer: SIIPrinterManagerWrapper!
     fileprivate let _buttonTappQueue = DispatchQueue(label: "com.sii-ps.button")
-    var _registrar: FlutterPluginRegistrar!
     
     let _successfullStatus = 0
-    
-    init(registrar: FlutterPluginRegistrar) {
-        _registrar = registrar
-    }
 
     @objc
     internal var _printerTypeSeg: UISegmentedControl!
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "sii_printer_plugin", binaryMessenger: registrar.messenger())
-    let instance = SwiftSiiPrinterPlugin(registrar: registrar)
+    let instance = SwiftSiiPrinterPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
 
@@ -57,7 +52,7 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
       let accessories = EAAccessoryManager.shared().connectedAccessories
       if accessories.count > 0 {
           for obj: EAAccessory in accessories {
-              if obj.protocolStrings.firstIndex(of: SII_EXTERNAL_ACCESSORY_PROTOCOL) != nil {
+              if obj.protocolStrings.index(of: SII_EXTERNAL_ACCESSORY_PROTOCOL) != nil {
                   let macAddressOptional = obj.value(forKey: "macAddress") as? String
                   if macAddressOptional != nil {
                         printerList.add(obj.name)
@@ -136,14 +131,10 @@ public class SwiftSiiPrinterPlugin: NSObject, FlutterPlugin {
     }
     
     private func printLogo(_ call: FlutterMethodCall,_ result: @escaping FlutterResult) {
-        guard let args = call.arguments as? [String : Any] else {return}
-        let assetsImage = args["assets_image"] as! String
+        let filePath = Bundle.main.path(forResource: "logo", ofType: "jpg")
         self._buttonTappQueue.async {
             do {
-                let key: String = self._registrar.lookupKey(forAsset: assetsImage)
-                let topPath = Bundle.main.path(forResource: key, ofType: nil)
-                debugPrint(topPath ?? "Not found file path")
-                try self._printer.sendDataFile(topPath)
+                try self._printer.sendDataFile(filePath)
                 result(self._successfullStatus)
             } catch let error as NSError {
                 result(Int32(error.code))

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:sii_printer_plugin/type/character_bold.dart';
 import 'package:sii_printer_plugin/type/character_font.dart';
@@ -19,14 +20,14 @@ class SiiPrinterCore {
   static Future<SiiErrorCode> connect(String printerAddress) async {
     final int statusCode = await _channel.invokeMethod('connect', {"printerAddress": printerAddress});
     var errorCode = MethodUtils.errorName(statusCode);
-    print(errorCode.message);
+    debugPrint(errorCode.message);
     return errorCode;
   }
 
   static Future<SiiErrorCode> printText(String text) async {
     final int statusCode = await _channel.invokeMethod('printText', {"text": text});
     var errorCode = MethodUtils.errorName(statusCode);
-    print(errorCode.message);
+    debugPrint(errorCode.message);
     return errorCode;
   }
 
@@ -49,21 +50,23 @@ class SiiPrinterCore {
       "characterFont": font.typeName,
     });
     var errorCode = MethodUtils.errorName(statusCode);
-    print(errorCode.message);
+    debugPrint(errorCode.message);
     return errorCode;
   }
 
-  static Future<SiiErrorCode> printLogo() async {
-    final int statusCode = await _channel.invokeMethod('printLogo');
+  static Future<SiiErrorCode> printLogo(String assetImagePath) async {
+    final int statusCode = await _channel.invokeMethod('printLogo', {
+      "assets_image": assetImagePath,
+    });
     var errorCode = MethodUtils.errorName(statusCode);
-    print(errorCode.message);
+    debugPrint(errorCode.message);
     return errorCode;
   }
 
   static Future<SiiErrorCode> cutPaper() async {
     final int statusCode = await _channel.invokeMethod('cutPaper');
     var errorCode = MethodUtils.errorName(statusCode);
-    print(errorCode.message);
+    debugPrint(errorCode.message);
     return errorCode;
   }
 
